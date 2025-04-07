@@ -13,7 +13,7 @@ VIDEO_IDS_FILE = "all_video_ids.txt"
 OUTPUT_DIR = "comment_data"
 MAX_COMMENTS_PER_VIDEO = 500
 MAX_WORKERS = 3
-REQUEST_DELAY = (1, 3)  # seconds
+REQUEST_DELAY = (1, 3)
 MAX_RUNTIME = timedelta(hours=20)
 SAVE_INTERVAL = timedelta(minutes=30)
 
@@ -23,23 +23,27 @@ TANGLISH_KEYWORDS = {
     'nalla', 'thala', 'varuma', 'romba', 'semma', 'epdi', 'keep it up'
 }
 
+def safe_to_parquet(df, path):
+    """Handle Parquet export with fallback to CSV"""
+    try:
+        df.to_parquet(path, engine='pyarrow', compression='gzip')
+    except ImportError:
+        print("PyArrow not available, falling back to CSV")
+        df.to_csv(path.replace('.parquet', '.csv'), index=False)
+
 def load_video_ids():
-    """Load and validate video IDs"""
     with open(VIDEO_IDS_FILE) as f:
         return [line.strip() for line in f if len(line.strip()) == 11]
 
 def is_pure_tamil(text):
-    """Check for Tamil-only text"""
     return all(0x0B80 <= ord(c) <= 0x0BFF or c.isspace() or c in ',.!?;:' for c in text)
 
 def is_tanglish(text):
-    """Detect English-written Tamil-like content"""
     text_lower = text.lower()
     return (any(kw in text_lower for kw in TANGLISH_KEYWORDS) and \
            not any(0x0B80 <= ord(c) <= 0x0BFF for c in text))
 
 def classify_comment(text):
-    """Categorize comment type"""
     if is_pure_tamil(text):
         return "pure_tamil"
     elif is_tanglish(text):
@@ -47,7 +51,6 @@ def classify_comment(text):
     return "code_mixed"
 
 def scrape_comments(video_id):
-    """Fetch comments with random delays"""
     downloader = YoutubeCommentDownloader()
     comments = []
     
@@ -66,7 +69,6 @@ def scrape_comments(video_id):
         return video_id, []
 
 def process_batch(batch_ids, batch_num):
-    """Process a batch of videos"""
     batch_results = []
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -86,25 +88,30 @@ def process_batch(batch_ids, batch_num):
     if batch_results:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         batch_file = os.path.join(OUTPUT_DIR, f"batch_{batch_num}.parquet")
-        pd.DataFrame(batch_results).to_parquet(batch_file, compression='gzip')
+        safe_to_parquet(pd.DataFrame(batch_results), batch_file)
     
     return len(batch_results)
 
 def combine_results():
-    """Merge all batch files"""
     all_data = []
     for file in os.listdir(OUTPUT_DIR):
-        if file.endswith(".parquet"):
-            all_data.append(pd.read_parquet(os.path.join(OUTPUT_DIR, file)))
+        file_path = os.path.join(OUTPUT_DIR, file)
+        try:
+            if file.endswith(".parquet"):
+                all_data.append(pd.read_parquet(file_path))
+            elif file.endswith(".csv"):
+                all_data.append(pd.read_csv(file_path))
+        except Exception as e:
+            print(f"⚠️ Error reading {file}: {str(e)}")
+            continue
     
     if all_data:
         final_df = pd.concat(all_data)
         
-        # Save categorized datasets
         for type_name in ["pure_tamil", "code_mixed", "tanglish"]:
             subset = final_df[final_df['type'] == type_name]
             if not subset.empty:
-                subset.to_csv(f"{type_name}_comments.csv", index=False)
+                safe_to_parquet(subset, f"{type_name}_comments.parquet")
         
         print(f"\n✅ Final counts:")
         print(final_df['type'].value_counts())
@@ -130,16 +137,13 @@ def main():
         batch_ids = remaining_ids[i:i+100]
         batch_count = process_batch(batch_ids, batch_num + 1)
         
-        # Log processed IDs
         with open("processed.log", "a") as f:
             f.write("\n".join(batch_ids) + "\n")
         
-        # Progress report
         elapsed = datetime.now() - start_time
         print(f"\nBatch {batch_num+1}/{total_batches} | {batch_count} comments")
         print(f"Elapsed: {elapsed} | Est. remaining: {elapsed*(total_batches-batch_num-1)/(batch_num+1)}")
-        # this
-        # Periodic cooldown
+        
         if (batch_num + 1) % 5 == 0:
             cooldown = random.randint(30, 60)
             print(f"🛑 Cooling down for {cooldown}s...")
