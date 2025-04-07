@@ -138,7 +138,7 @@ def main():
         elapsed = datetime.now() - start_time
         print(f"\nBatch {batch_num+1}/{total_batches} | {batch_count} comments")
         print(f"Elapsed: {elapsed} | Est. remaining: {elapsed*(total_batches-batch_num-1)/(batch_num+1)}")
-        
+        # this
         # Periodic cooldown
         if (batch_num + 1) % 5 == 0:
             cooldown = random.randint(30, 60)
