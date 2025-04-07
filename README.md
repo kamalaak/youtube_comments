@@ -29,3 +29,47 @@ source venv/bin/activate  # Linux/Mac
 
 # Install dependencies
 pip install -r requirements.txt
+
+
+
+```
+
+# 🚀 How to Use
+
+***Step 1: Extract Video IDs from a Channel***
+- Open the sel.py file.
+- Replace the channel_url with the YouTube channel link you want to scrape.
+- Run the script:
+``` 
+    python sel.py
+```
+TThis will automatically create or update the all_video_ids.txt file with video IDs. 
+
+✅ You can extract video IDs from multiple channels — just update the link in sel.py and run again.
+
+🧠 Don’t worry about duplicates — the script only adds new IDs to the .txt file.
+
+# Step 2: Scrape Comments from Videos
+
+## Once video IDs are saved in all_video_ids.txt, run:
+
+```
+python scra.py
+
+```
+
+This will scrape the comments from all listed videos and categorize them by language type.
+
+
+# 🧠 Workflow Overview
+
+## 1. Initialization
+
+- Loads video IDs
+- Resumes from last checkpoint if available
+
+# 2. Batch Processing
+
+- Processes up to 100 videos in parallel
+- Applies anti-ban delays
+- Automatically retries failed requests
