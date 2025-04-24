@@ -1,0 +1,6 @@
+      video_id                                               text        type
+0  52nebabyTBw  Joules ( J ) என்றால் என்ன.? Hammer mechine wor...  code_mixed
+2  52nebabyTBw  கடல் தண்ணீரில் அறிகக்காமல் இருக்க anode  பயன்ப...  code_mixed
+3  52nebabyTBw  மனித மூளை மற்ற வண்ணங்களை காட்டிலும் சிகப்பு வண...  code_mixed
+4  52nebabyTBw  தம்பி  air purifier பற்றி பேசுங்க. அதை வீட்டில...  code_mixed
+6  nJzKGLEFTYo  ரேடியோ இரண்டு விதத்தை விட கூடுதலாக உள்ளது FM S...  code_mixed
