@@ -19,7 +19,7 @@ A robust pipeline for scraping and analyzing Tamil language comments from YouTub
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/tamil-comment-scraper.git
+git clone https://github.com/kamalaak/youtube_comments.git
 cd tamil-comment-scraper
 
 # Create virtual environment
